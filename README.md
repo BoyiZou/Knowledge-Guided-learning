@@ -11,6 +11,6 @@
 ## About the code
 * The code in this repository was written in '[Python 3.11](https://www.python.org/downloads/)' and '[PyTorch 2.5.1](https://pytorch.org/get-started/locally/)'. (or it can be directly run on a [Colab](https://colab.google/) Notebook.)
 
-* Here, we provide the code of this paper and have added annotations to certain sections to enhance understanding and facilitate learning. We use 'KGL.py' in 'Mania-2d' as an example to provide annotations for interested scholars to study, and the remaining examples follow a similar format.
+* Here, we provide the code of this paper and have added annotations to certain sections to enhance understanding and facilitate learning. We use 'KGL_2d_M.py' in 'Mania-2d' as an example to provide annotations for interested scholars to study, and the remaining examples follow a similar format.
 
 * One should keep in mind that this paper primarily proposes the method and does not focus on fine-tuning parameters. Additionally, we employ a larger depth and width to ensure sufficient approximation capability, highlighting the challenges associated with such problems. Similar results can be achieved with fewer parameters. And one may need to readjust the parameters when using this code to solve different problems.
