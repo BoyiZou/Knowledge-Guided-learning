@@ -6,16 +6,17 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import sys, os
 
+# Network structure
 class RitzNet(torch.nn.Module):
     def __init__(self, params):
         super(RitzNet, self).__init__()
         self.params = params
-        self.linearIn = nn.Linear(self.params["d"], self.params["width"])
+        self.linearIn = nn.Linear(self.params["d"], self.params["width"]) # Input layer
         self.linear = nn.ModuleList()
         for _ in range(params["depth"]):
-            self.linear.append(nn.Linear(self.params["width"], self.params["width"]))
+            self.linear.append(nn.Linear(self.params["width"], self.params["width"])) # Hidden layers
 
-        self.linearOut = nn.Linear(self.params["width"], self.params["dd"])
+        self.linearOut = nn.Linear(self.params["width"], self.params["dd"]) # Output layer
 
     def forward(self, x):
 
@@ -23,21 +24,25 @@ class RitzNet(torch.nn.Module):
 
         x = self.linearIn(x)
         for layer in self.linear:
-            x_temp = (F.tanh(layer(x)))**3
-            x = x_temp+x
+            x_temp = (F.tanh(layer(x)))**3 # Activation
+            x = x_temp+x                   # Residual connection
 
-        x = self.linearOut(x)
-        x = x*(xxx)*(1-xxx) + xxx
+        x = self.linearOut(x)   
+        x = x*(xxx)*(1-xxx) + xxx # Modification to strictly satisfy the boundary conditions (The additional summation term can be any function that strictly 
+                                  # satisfies the left and right boundary conditions. Since x is the most intuitive and straightforward choice, it is used here.
+                                  #  Using other functions (e.g. x^2) would yield similar training results.)
 
         return x
 
+# Initialization of parameters
 def initWeights(m):
     if type(m) == nn.Linear:
         torch.nn.init.xavier_normal_(m.weight)
         torch.nn.init.zeros_(m.bias)
 
 def trainnew(model,device,params,optimizer,scheduler):
-
+ 
+    # Generate training data
     data = torch.zeros((params["bodyBatch"],params["d"])).float().to(device)
     data[:,0] = torch.from_numpy(np.random.rand(params["bodyBatch"]))
     data[:,1] = torch.from_numpy(np.random.rand(params["bodyBatch"]))
@@ -59,12 +64,13 @@ def trainnew(model,device,params,optimizer,scheduler):
         u = model(data).reshape(-1,1)
 
         model.zero_grad()
-
+        # Computing the gradients
         dudx = torch.autograd.grad(u,data,grad_outputs=torch.ones_like(u),retain_graph=True,create_graph=True,only_inputs=True,allow_unused=True)[0]
 
         dudx1 = dudx[:,0]
         dudx2 = dudx[:,1]
 
+        # Training process of KGL: 4 steps for original functional and 1 step for the guiding term.
         if step < 40000:
 
           if step%5 >3:
@@ -87,6 +93,7 @@ def trainnew(model,device,params,optimizer,scheduler):
                 file = open("loss.txt","a")
                 file.write(str(loss.cpu().detach().numpy())+"\n")
 
+        # Data shuffling as used in deep Ritz method
         if step%params["sampleStep"] == params["sampleStep"]-1:
 
             np.random.seed(step)
@@ -99,32 +106,14 @@ def trainnew(model,device,params,optimizer,scheduler):
             yy = data[:,0].reshape(-1,1)
             data.requires_grad = True
 
-        # if step%500 == 1:
-        #     test(model,device,params)
-
         if 10*(step+1)%params["trainStep"] == 0:
             print("%s%% finished..."%(100*(step+1)//params["trainStep"]))
 
+        # backpropagation and scheduling for the learning rate
         loss1.backward()
 
         optimizer.step()
         scheduler.step()
-
-def exactnew(data,params):
-
-    xx = data[:,0].reshape(-1,1)
-    yy = data[:,1].reshape(-1,1)
-
-    nexact = xx**(1/3)
-
-    return nexact
-
-def errorFunnew(nxt,target,params):
-
-    error = (nxt-target)**2
-    error = math.sqrt(torch.mean(error))
-
-    return error
 
 def test(model,device,params):
 
@@ -268,20 +257,19 @@ def main():
     torch.manual_seed(22)
     np.random.seed(1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    #parameters
     params = dict()
-    params["d"] = 2
-    params["dd"] = 1
-    params["bodyBatch"] = 10000
-    params["lr"] = 0.01
-    params["width"] = 50
-    params["depth"] = 4
-    params["numQuad"] = 1001
-    params["trainStep"] = 50000
-    params["writeStep"] = 50
+    params["d"] = 2  # Input dimension
+    params["dd"] = 1  # Output dimension
+    params["bodyBatch"] = 10000  # Nubmer of training data
+    params["lr"] = 0.01  # learning rate. Here, we can use the same learning rate for both processes.
+    params["width"] = 50  # width of the network 
+    params["depth"] = 4   # Number of hidden layers of the network 
+    params["numQuad"] = 1001 # Number of test point (1d)
+    params["trainStep"] = 50000 # Total training step
+    params["writeStep"] = 50 
     params["sampleStep"] = 10
-    params["step_size"] = 5000
-    params["milestone"] = [1000,1800,2000,2100,2200,14500,16000,18000,19500,21000,25000,29000,34000,42000,45000,48000,52000,54000,56000,58000,59000,60000,67000,72000,78000] #ok
+    params["milestone"] = [1000,1800,2000,2100,2200,14500,16000,18000,19500,21000,25000,29000,34000,42000,45000,48000,52000,54000,56000,58000,59000,60000,67000,72000,78000] 
     params["gamma"] = 0.5
     params["decay"] = 0.0001
 
