@@ -1,3 +1,7 @@
+# Here, we only use this code as an example for annotation. One should keep in mind that this paper primarily proposes the method and does not focus on fine-tuning parameters.
+# Additionally, we employ a larger depth and width to ensure sufficient approximation capability, highlighting the challenges associated with such problems. 
+# Similar results can be achieved with fewer parameters, and one may need to readjust the parameters when using this code to solve different problems.
+
 import numpy as np
 import math, torch, time
 import torch.nn.functional as F
